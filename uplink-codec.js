@@ -1,4 +1,4 @@
-
+const assert = require('assert')
 const fs = require('fs');
 const decode_int = (b, start, end) =>
 {
@@ -76,11 +76,42 @@ const decode_message = (buf, len) =>
     return false;
 };
 
+const encode_message = (flags, packet_type, payload, dest) =>
+{
+    if (dest && typeof(dest) != 'string')
+        throw("expecting dest as hex string");
+
+    const type = 0;
+    flags &= 0x0FFFFFFFFF;
+    flags += (type << 28);
+    let header_buf =
+        Buffer.from(
+            encode_int(flags, 4) +                            // flags = 0
+            encode_int(payload.length, 4) +                   // payload size
+            encode_int(Math.floor(Date.now()/1000), 4) +      // timestamp
+            encode_int(packet_type, 4) +                      // payload type
+            "0".repeat(160) +                                 // all other fields zero
+            (dest ? dest : "0".repeat(64))
+    , "hex");
+
+    assert(header_buf.length == 128, "header buffer should be 128 bytes");
+
+    console.log(header_buf);
+    return Buffer.concat([header_buf, payload]);
+}
+
+const write_message = (fd, flags, packet_type, payload, dest) =>
+{
+    fs.writeSync(fd, encode_message(flags, packet_type, payload, dest));
+}
 
 const read_message = (fd) =>
 {
     let buf = Buffer.alloc(1024*1024*10); // max 10 mib
     let bytes_read = fs.readSync(fd, buf);
+    if (bytes_read == 0)
+        return false;
+
     return decode_message(buf, bytes_read);
 }
 
@@ -120,5 +151,7 @@ module.exports = {
     encode_int: encode_int,
     decode_msg: decode_message,
     read_msg: read_message,
-    mt: message_types
+    mt: message_types,
+    encode_msg: encode_message,
+    write_msg: write_message
 };
