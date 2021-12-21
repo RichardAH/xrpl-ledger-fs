@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "elliptic": "^6.5.4",
+    "protobufjs": "^6.11.2",
+    "ripple-address-codec": "^4.2.3",
+    "ripple-binary-codec": "^1.3.0",
+    "unix-seqpacket": "^1.0.3",
+    "xrpl-fetch-unl": "^1.0.1"
+  }
+}
